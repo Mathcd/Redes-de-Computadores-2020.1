@@ -1,5 +1,9 @@
 # Import socket module
 from socket import *    
+#from flask import Flask, render_template
+
+#app = Flask(__name__, template_folder='.')
+
 
 # Create a TCP server socket
 #(AF_INET is used for IPv4 protocols)
@@ -12,7 +16,7 @@ from socket import *
 serverSocket = socket(AF_INET, SOCK_STREAM)
 
 # Assign a port number
-serverPort = 6789
+serverPort = 6788
 
 # Bind the socket to server address and server port
 serverSocket.bind(("", serverPort))
@@ -50,7 +54,7 @@ def read_send(requestedFile, httpCode, connectionSocket):
 
 # Server should be up and running and listening to the incoming connections
 while True:
-	print 'Ready to serve...'
+	print ('Ready to serve...')
 	
 	# Set up a new connection from the client
 	connectionSocket, addr = serverSocket.accept()
@@ -60,7 +64,7 @@ while True:
 	try:
 		# Receives the request message from the client
 		message =  connectionSocket.recv(1024)
-		print message
+		print (message)
 		# Extract the path of the requested object from the message
 		# The path is the second part of HTTP header, identified by [1]
 		filePath = message.split()[1]
@@ -68,12 +72,12 @@ while True:
 		# ===========================================
 		# KILL SERVER (for development only)
 		if filePath == '/kill':
-			print "The server will shutdown now"
+			print ("The server will shutdown now")
 			break
 		# ===========================================
 		
-		print filePath
-		print "Tamanho do filePath:", len(filePath)
+		print (filePath)
+		print("Tamanho do filePath:", len(filePath))
 
 		# If no path is specified redirects to default page 
 		if filePath == '/':
@@ -95,7 +99,7 @@ while True:
 	# ============================================
 	# PROVISORY! BROKEN PIPE BUG HAS TO BE CORRECTED!!!
 	except IndexError:
-		print "Houve algum erro de indice\n\n"
+		print ("Houve algum erro de indice\n\n")
 		connectionSocket.send("HTTP/1.1 500 Internal Server Error\r\n\r\n")
 		# connectionSocket.send("<html><head></head><body><h1>500 Internal Server Error</h1></body></html>\r\n")
 	# ============================================

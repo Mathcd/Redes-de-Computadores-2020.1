@@ -39,21 +39,26 @@ def read_send(requestedFile, httpCode, connectionSocket):
 
 	# Close the connection socket
 	connectionSocket.close()
+	print "Connection closed\n"
 	
 
 # Server should be up and running and listening to the incoming connections
 while True:
-	print ('Ready to serve...')
+	print 'Ready to serve...'
 	
 	# Set up a new connection from the client
 	connectionSocket, addr = serverSocket.accept()
-	
+	print "\nConnection stablished"
+
+	# Show client info
+	print "Client Address: "+str(addr[0])+":"+str(addr[1])+"\n"
 
 	# Dealing with exceptions
 	try:
 		# Receives the request message from the client
 		message =  connectionSocket.recv(1024)
-		print (message)
+		print "Request:\n"+message
+		
 		# Extract the path of the requested object from the message
 		# The path is the second part of HTTP header, identified by [1]
 		filePath = message.split()[1]
@@ -63,7 +68,7 @@ while True:
 		if filePath == '/kill':
 			read_send('serverkilled.html', 200, connectionSocket)
 			connectionSocket.close()
-			print ("The server has been shutdown")
+			print "The server has been shutdown by kill command\n"
 			break
 		
 
@@ -89,7 +94,7 @@ while True:
 	except IndexError:
 		requestedFile = "error500.html"
 		read_send(requestedFile, 500, connectionSocket)
-		print ("Internal server error\n\n")
+		print "Internal server error\n"
 
 
 	# For unexpected errors
@@ -99,12 +104,12 @@ while True:
 		try:
 			requestedFile = "error500.html"
 			read_send(requestedFile, 500, connectionSocket)
-			print ("Internal server error\n\n")
+			print "Internal server error\n"
 
 		# If it is not possible to notify the client
 		# just print the error on server's terminal
 		except:
-			print ("Internal server error\n\n")
+			print "Internal server error\n"
 
 
 # Close the server socket

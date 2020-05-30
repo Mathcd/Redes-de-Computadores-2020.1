@@ -1,22 +1,28 @@
-# Import socket module
+# Importing modules
 from socket import *    
+import thread
+import time
 
-# Create a TCP server socket
-serverSocket = socket(AF_INET, SOCK_STREAM)
 
-# Assign a port number
-serverPort = 6789
+# Keep the server running and listening to the incoming connections
+def setup_connections(serverSocket, serverFlag):
+	while True:
+		print 'Ready to serve...\n'
 
-# Bind the socket to server address and server port
-serverSocket.bind(("", serverPort))
+		# Set up a new connection from the client
+		connectionSocket, addr = serverSocket.accept()
+		print "Connection stablished"
 
-# Listen to at most 4 connections at a time
-serverSocket.listen(4)
+		# Show client info
+		print "Client Address: "+str(addr[0])+":"+str(addr[1])+"\n"
+
+		# Start a new threat to each client connected
+		thread.start_new_thread(sockets_for_clients, (connectionSocket, addr))
 
 
 # Open and read the requestedFile, send the socket headline
 # according to the http code and send the file through socket
-def read_send(requestedFile, httpCode, connectionSocket):
+def read_send(requestedFile, httpCode, connectionSocket, addr):
 	
 	# open the requested data as binary and read it
 	f = open(requestedFile, 'rb')
@@ -36,22 +42,18 @@ def read_send(requestedFile, httpCode, connectionSocket):
 	connectionSocket.send(responseHeader)
 	connectionSocket.send(requestedData)
 	connectionSocket.send("\r\n")
+	print "Sending '"+requestedFile+"' to "+str(addr[0])+":"+str(addr[1])+"\n"
 
 	# Close the connection socket
 	connectionSocket.close()
-	print "Connection closed\n"
 	
 
-# Server should be up and running and listening to the incoming connections
-while True:
-	print 'Ready to serve...'
+# Get the client request, process it and return a file
+# depending on the request
+def sockets_for_clients(connectionSocket, addr):
 	
-	# Set up a new connection from the client
-	connectionSocket, addr = serverSocket.accept()
-	print "\nConnection stablished"
-
-	# Show client info
-	print "Client Address: "+str(addr[0])+":"+str(addr[1])+"\n"
+	# flag for server status
+	global serverFlag
 
 	# Dealing with exceptions
 	try:
@@ -66,14 +68,19 @@ while True:
 
 		# Server shutdown command
 		if filePath == '/kill':
-			read_send('serverkilled.html', 200, connectionSocket)
-			connectionSocket.close()
+			requestedFile = 'serverkilled.html'
+			#connectionSocket.close()
 			print "The server has been shutdown by kill command\n"
-			break
-		
+			serverFlag = False
+
+
+		# Testing error 500 response with intentional invalid command
+		elif filePath == '/teste500':
+			requestedFile = 'noFile.html'
+
 
 		# If no path is specified redirects to default page 
-		if filePath == '/':
+		elif filePath == '/':
 			requestedFile = 'index.html'
 
 		# Otherwise redirects to the requested file
@@ -81,20 +88,13 @@ while True:
 			requestedFile = filePath[1:]
 
 		# Read and send the file
-		read_send(requestedFile, 200, connectionSocket)
+		read_send(requestedFile, 200, connectionSocket, addr)
 
 
 	# Exception for file not found
 	except IOError:
 		requestedFile = "error404.html"
-		read_send(requestedFile, 404, connectionSocket)
-
-
-	# Dealing with broken pipe exception bug
-	except IndexError:
-		requestedFile = "error500.html"
-		read_send(requestedFile, 500, connectionSocket)
-		print "Internal server error\n"
+		read_send(requestedFile, 404, connectionSocket, addr)
 
 
 	# For unexpected errors
@@ -103,7 +103,7 @@ while True:
 		# Try to notify the client with error 500
 		try:
 			requestedFile = "error500.html"
-			read_send(requestedFile, 500, connectionSocket)
+			read_send(requestedFile, 500, connectionSocket, addr)
 			print "Internal server error\n"
 
 		# If it is not possible to notify the client
@@ -112,6 +112,28 @@ while True:
 			print "Internal server error\n"
 
 
-# Close the server socket
+
+# Create a TCP server socket
+serverSocket = socket(AF_INET, SOCK_STREAM)
+
+# Assign a port number
+serverPort = 6789
+
+# Bind the socket to server address and server port
+serverSocket.bind(("", serverPort))
+
+# Listen to at most 5 connections at a time
+serverSocket.listen(5)
+
+#global Flag for server status (up/down)
+serverFlag = True
+
+# Start the server
+thread.start_new_thread(setup_connections, (serverSocket, serverFlag))
+
+# Check server status, if False, close the server socket and ends the program
+while serverFlag:
+	time.sleep(1)
+
 serverSocket.close()  
 

@@ -11,7 +11,7 @@ def setup_connections(serverSocket, serverFlag):
 
 		# Set up a new connection from the client
 		connectionSocket, addr = serverSocket.accept()
-		print "Connection stablished"
+		print "Connection established"
 
 		# Show client info
 		print "Client Address: "+str(addr[0])+":"+str(addr[1])+"\n"
@@ -125,7 +125,7 @@ serverSocket.bind(("", serverPort))
 # Listen to at most 5 connections at a time
 serverSocket.listen(5)
 
-#global Flag for server status (up/down)
+# Global Flag for server status (up/down)
 serverFlag = True
 
 # Start the server
